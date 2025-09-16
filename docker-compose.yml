@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15
+    container_name: aethernet_db
+    restart: always
+    environment:
+      POSTGRES_USER: aethernet_user
+      POSTGRES_PASSWORD: devender
+      POSTGRES_DB: aethernet
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+
