@@ -1,1 +1,37 @@
-/target
+# === Rust defaults ===
+/target/
+**/*.rs.bk
+
+# === Build & dependency artifacts ===
+Cargo.lock         # optional if you’re writing a library; keep if it’s a binary project
+*.rlib
+*.so
+*.dylib
+*.dll
+*.exe
+*.pdb
+
+# === IDE/editor junk ===
+*.swp
+*.swo
+*.idea/
+*.vscode/
+*.DS_Store
+*.log
+
+# === Solana / RocksDB ledger artifacts ===
+test-ledger/
+!test-ledger/*.json   # keep keypair/account jsons if you need them
+!test-ledger/*.toml   # allow configs if any
+
+# Don’t track RocksDB files
+test-ledger/rocksdb/
+
+# Don’t track validator logs and generated binaries
+test-ledger/*.log
+test-ledger/*.bin
+test-ledger/*.tar.bz2
+
+# Explicit ignores for noisy files
+test-ledger/ledger.lock
+test-ledger/validator.log
