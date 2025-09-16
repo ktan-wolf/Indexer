@@ -9,3 +9,5 @@ sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres"] }
 solana-client = "3.0.2"
 solana-sdk = "3.0.0"
 borsh = "1.5.7"
+anyhow = "1.0.99"
+dotenvy = "0.15.7"

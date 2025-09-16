@@ -1556,7 +1556,9 @@ dependencies = [
 name = "indexer"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "borsh",
+ "dotenvy",
  "solana-client",
  "solana-sdk",
  "sqlx",
