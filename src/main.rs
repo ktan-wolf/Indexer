@@ -63,7 +63,7 @@ async fn main() -> Result<(), AppError> {
 
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(database_url)
+        .connect(&database_url)
         .await?;
     println!("✅ Successfully connected to the database!");
 
@@ -74,7 +74,7 @@ async fn main() -> Result<(), AppError> {
     tokio::spawn(async move {
         loop {
             println!("\n🔄 [Background Task] Polling Solana program accounts...");
-            if let Err(e) = fetch_program_accounts(rpc_url, program_id, &pool_clone).await {
+            if let Err(e) = fetch_program_accounts(&rpc_url, program_id, &pool_clone).await {
                 eprintln!("⚠️ [Background Task] Error during fetch: {}", e);
             }
             println!("✅ [Background Task] Polling cycle complete. Sleeping for 10 seconds...");
