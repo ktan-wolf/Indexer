@@ -92,9 +92,10 @@ async fn main() -> Result<(), AppError> {
         .with_state(pool)
         .layer(cors);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    let port = std::env::var("PORT").unwrap_or_else(|_| "8081".to_string());
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
     println!("\n🚀 API server listening on http://{}", listener.local_addr()?);
-    println!("   Try accessing http://localhost:3000/nodes in your browser.");
+    println!("   Try accessing http://localhost:8081/nodes in your browser.");
     axum::serve(listener, app).await?;
 
     Ok(())
