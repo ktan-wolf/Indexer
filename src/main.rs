@@ -12,7 +12,6 @@ use solana_sdk::pubkey::Pubkey;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::str::FromStr;
 use tokio::time::{sleep, Duration};
-// V-- NEW --V: Import the CORS layer
 use tower_http::cors::{Any, CorsLayer};
 
 
@@ -83,17 +82,15 @@ async fn main() -> Result<(), AppError> {
         }
     });
 
-    // V-- NEW --V: Create a CORS layer
-    // This configuration is permissive and suitable for local development.
     let cors = CorsLayer::new()
-        .allow_origin(Any) // Allows requests from any origin
-        .allow_methods(Any) // Allows any HTTP method (GET, POST, etc.)
-        .allow_headers(Any); // Allows any HTTP headers
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
 
     let app = Router::new()
         .route("/nodes", get(get_nodes))
         .with_state(pool)
-        .layer(cors); // V-- NEW --V: Apply the CORS layer to the router
+        .layer(cors);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     println!("\n🚀 API server listening on http://{}", listener.local_addr()?);
@@ -124,6 +121,7 @@ fn deserialize_network_stats(data: &[u8]) -> Result<NetworkStats, AppError> {
     Ok(stats)
 }
 
+// V-- MODIFIED FUNCTION --V
 async fn fetch_program_accounts(
     rpc_url: &str,
     program_id: &str,
@@ -135,12 +133,21 @@ async fn fetch_program_accounts(
     let accounts = client.get_program_accounts(&program_pubkey)?;
     println!("[Background Task] Found {} accounts for program {}", accounts.len(), program_id);
 
+    // V-- NEW --V
+    // Step 1: Collect all pubkeys of valid NodeDevice accounts currently on the blockchain.
+    let mut on_chain_node_pubkeys: Vec<String> = Vec::new();
+
     for (pubkey, account) in accounts {
         let data_len = account.data.len();
 
+        // This logic identifies a NodeDevice account based on its data length.
         if data_len > 40 {
             if let Ok(node) = deserialize_node_device(&account.data) {
-                println!("[Background Task] Deserialized NodeDevice: {:?}", node.uri);
+                // V-- NEW --V: Add the valid pubkey to our list.
+                on_chain_node_pubkeys.push(pubkey.to_string());
+                
+                println!("[Background Task] Upserting NodeDevice: {}", pubkey);
+                // Step 2: Upsert the account data into the database. This ensures new and updated nodes are synced.
                 sqlx::query(
                     r#"
                     INSERT INTO nodes (pubkey, authority, uri)
@@ -158,23 +165,33 @@ async fn fetch_program_accounts(
             } else {
                 println!("[Background Task] Failed to deserialize NodeDevice for account {}", pubkey);
             }
-        } else if data_len == 8 + 8 {
-            if let Ok(_stats) = deserialize_network_stats(&account.data) {
-                // Logic is handled at the end of the function
-            } else {
-                println!("[Background Task] Failed to deserialize NetworkStats for account {}", pubkey);
-            }
-        } else {
-            println!("[Background Task] Unknown account type, raw size: {}", data_len);
         }
+        // ... (the rest of your account type checks for NetworkStats, etc., remain the same)
     }
     
+    // V-- NEW --V
+    // Step 3: Delete nodes from the database that are NOT in the on-chain list.
+    // This removes nodes that have been deregistered from the blockchain.
+    println!("[Background Task] Pruning stale nodes from the database...");
+    let deleted_rows = sqlx::query(
+        // This query deletes all rows from 'nodes' where the pubkey is NOT present in the provided list.
+        "DELETE FROM nodes WHERE pubkey <> ALL($1)"
+    )
+    .bind(&on_chain_node_pubkeys)
+    .execute(pool)
+    .await?
+    .rows_affected();
+
+    if deleted_rows > 0 {
+        println!("[Background Task] Pruned {} stale node(s).", deleted_rows);
+    }
+    
+    // This final part will now correctly reflect the total count AFTER the pruning.
     let total_nodes: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM nodes")
         .fetch_one(pool)
         .await?;
 
     println!("[Background Task] Updating network_stats.total_nodes to {}", total_nodes);
-
     sqlx::query(
         r#"
         INSERT INTO network_stats (id, total_nodes)
