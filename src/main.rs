@@ -56,10 +56,10 @@ async fn get_nodes(
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
-    let rpc_url = "http://127.0.0.1:8899";
+    let rpc_url = std::env::var("RPC_URL").unwrap_or_else(|_| "https://api.devnet.solana.com".to_string());
     let client = RpcClient::new(rpc_url.to_string());
     let program_id = "3je23jfTQJBkYTYhLCBjH2F9thAcaY9g7M7RYR92uhWu";
-    let database_url = "postgres://aethernet_user:devender@localhost:5432/aethernet";
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let pool = PgPoolOptions::new()
         .max_connections(5)
