@@ -11,3 +11,6 @@ solana-sdk = "3.0.0"
 borsh = "1.5.7"
 anyhow = "1.0.99"
 dotenvy = "0.15.7"
+axum = "0.7"
+serde = { version = "1.0", features = ["derive"] }
+tower-http = { version = "0.5.2", features = ["cors"] }
