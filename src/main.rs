@@ -58,7 +58,7 @@ async fn get_nodes(
 async fn main() -> Result<(), AppError> {
     let rpc_url = std::env::var("RPC_URL").unwrap_or_else(|_| "https://api.devnet.solana.com".to_string());
     let client = RpcClient::new(rpc_url.to_string());
-    let program_id = "3je23jfTQJBkYTYhLCBjH2F9thAcaY9g7M7RYR92uhWu";
+    let program_id = "5LzZhK83HbsJPTC877hRcfCZLg1cZvqDUQgLL3BxLYb4";
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let pool = PgPoolOptions::new()
